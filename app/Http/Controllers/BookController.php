@@ -3,16 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBookRequest;
-use Validator;
+use App\Http\Requests\UpdateBookRequest;
+use App\Http\Resources\BookResource;
 use App\Models\Book;
-use Illuminate\Http\Request;
 
 class BookController extends Controller
 {
-    public function __constructor() {
-        //
-    }
-
     /**
      * Display a listing of the resource.
      *
@@ -20,7 +16,7 @@ class BookController extends Controller
      */
     public function index()
     {
-        return response()->json(Book::all());
+        return BookResource::collection(Book::paginate());
     }
 
     /**
@@ -31,20 +27,7 @@ class BookController extends Controller
      */
     public function store(StoreBookRequest $request)
     {
-        $validated = $request->validated();
-
-        // if ($validator->fails()) {
-        //     return response()->json($validator->errors());
-        // }
-
-        $book = Book::create([
-            'title' => $request->title,
-            'authors' => $request->authors,
-            'description' => $request->description,
-            'image' => $request->image,
-            'reviews' => []
-        ]);
-        return response()->json($book);
+        return new BookResource(Book::create($request->validated()));
     }
 
     /**
@@ -55,7 +38,7 @@ class BookController extends Controller
      */
     public function show(Book $book)
     {
-        return response()->json($book || null);
+        return new BookResource($book);
     }
 
     /**
@@ -65,9 +48,14 @@ class BookController extends Controller
      * @param  \App\Models\Book  $book
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Book $book)
+    public function update(UpdateBookRequest $request, Book $book)
     {
-        //
+        $validated = $request->validated();
+        foreach ($validated as $k => $v) {
+            $book->$k = $v;
+        }
+        $book->save();
+        return new BookResource($book);
     }
 
     /**
@@ -79,6 +67,6 @@ class BookController extends Controller
     public function destroy(Book $book)
     {
         $book->delete();
-        return response()->json(['success' => true]);
+        return new BookResource($book);
     }
 }

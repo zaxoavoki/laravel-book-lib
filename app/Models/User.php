@@ -6,13 +6,11 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Jenssegers\Mongodb\Auth\User as Authenticatable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable;
-    
-    protected $connection = 'mongodb';
 
     public function getJWTIdentifier()
     {
@@ -25,7 +23,7 @@ class User extends Authenticatable implements JWTSubject
             'email' => $this->email,
             'name' => $this->name,
             'image' => $this->image,
-            '_id' => $this->_id
+            'id' => $this->id
         ];
     }
 
@@ -51,6 +49,6 @@ class User extends Authenticatable implements JWTSubject
 
     public function books()
     {
-        return $this->hasMany(Book::class);
+        return $this->hasManyThrough(Book::class, BookUser::class);
     }
 }

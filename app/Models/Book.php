@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use Jenssegers\Mongodb\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Book extends Model
 {
-    protected $connection = 'mongodb';
-    protected $fillable = ['title', 'authors', 'image', 'description', 'reviews'];
+    protected $fillable = ['title', 'authors', 'image', 'description', 'bid'];
 
     public function reviews()
     {
@@ -16,6 +15,6 @@ class Book extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class)->using(BookUser::class);
     }
 }

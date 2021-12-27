@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use Jenssegers\Mongodb\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Review extends Model
 {
-    protected $connection = 'mongodb';
-    protected $fillable = ['text', 'stars', 'book', 'user'];
+    protected $fillable = ['text', 'stars'];
 
     public function user()
     {

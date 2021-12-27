@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Validator;
 
 class UserController extends Controller
 {
@@ -16,7 +17,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        return response()->json(User::all());
+        return UserResource::collection(User::paginate());
     }
 
     /**
@@ -25,39 +26,20 @@ class UserController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-            'image' => 'string|min:6',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors());
-        }
-
-        $user = User::where('email', '=', $request->email)->first();
+        $validated = $request->validated();
+        $user = User::where('email', '=', $validated['email'])->first();
         if ($user) {
-            return response()->error(['error' => 'User already exists']);
+            return ['error' => 'User already exists'];
         }
 
-        $user = new User;
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->password = Hash::make($request->password);
-        if ($request->image) {
-            $user->image = $request->image;
-        } else {
-            $user->image = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
-        }
+        $user = User::create($validated);
+        $user->password = Hash::make($validated['password']);
         $user->save();
 
         $token = auth()->login($user);
-        return response()->json([
-            'access_token' => $token
-        ]);
+        return ['access_token' => $token];
     }
 
     /**
@@ -68,7 +50,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return response()->json($user);
+        return new UserResource($user);
     }
 
     /**
@@ -78,9 +60,14 @@ class UserController extends Controller
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        //
+        $validated = $request->validated();
+        foreach ($validated as $k => $v) {
+            $user->$k = $v;
+        }
+        $user->save();
+        return new UserResource($user);
     }
 
     /**
@@ -92,6 +79,6 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
-        return response()->json(['success' => true]);
+        return new UserResource($user);
     }
 }

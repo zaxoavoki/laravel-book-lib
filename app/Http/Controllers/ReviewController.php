@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreReviewRequest;
+use App\Http\Requests\UpdateReviewRequest;
+use App\Http\Resources\ReviewResource;
 use App\Models\Review;
-use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
@@ -14,7 +16,7 @@ class ReviewController extends Controller
      */
     public function index()
     {
-        return response()->json(Review::all());
+        return ReviewResource::collection(Review::paginate());
     }
 
     /**
@@ -23,9 +25,9 @@ class ReviewController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-        //
+    public function store(StoreReviewRequest $request)
+    {;
+        return new ReviewResource(Review::create($request->validated()));
     }
 
     /**
@@ -36,7 +38,7 @@ class ReviewController extends Controller
      */
     public function show(Review $review)
     {
-        return response()->json($review);
+        return new ReviewResource($review->with('user')->with('book')->first());
     }
 
     /**
@@ -46,9 +48,14 @@ class ReviewController extends Controller
      * @param  \App\Models\Review  $review
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Review $review)
+    public function update(UpdateReviewRequest $request, Review $review)
     {
-        //
+        $validated = $request->validated();
+        foreach ($validated as $k => $v) {
+            $review->$k = $v;
+        }
+        $review->save();
+        return new ReviewResource($review);
     }
 
     /**
@@ -60,6 +67,6 @@ class ReviewController extends Controller
     public function destroy(Review $review)
     {
         $review->delete();
-        return response()->json(['success' => true]);
+        return new ReviewResource($review);
     }
 }
